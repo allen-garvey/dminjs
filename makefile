@@ -1,9 +1,12 @@
-SRC != find ./src -type f -name '*.d'
+SRC = ./src/main.d ./src/minify.d
 
 all: dev
 
-dev:
-	dmd $(SRC) -of./bin/main -od./bin -unittest
+dev: $(SRC)
+	dmd $(SRC) -of./bin/dminjs -od./bin -unittest
 
 release:
-	dmd $(SRC) -of./bin/main -od./bin -O -inline
+	dmd $(SRC) -of./bin/dminjs -od./bin -O -inline
+	
+test:
+	./bin/dminjs ./tests/test.js > ./tests/test.min.js
