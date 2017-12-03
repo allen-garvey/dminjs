@@ -2,16 +2,21 @@ module dminjs.minify;
 
 import std.ascii;
 
+enum MetaState { None, RegexLiteral, QuoteSingle, QuoteDouble, QuoteBacktick, CommentDoubleForwardSlash, CommentForwardSlashStar }
+
 struct ParserState{
     char previousChar;
     char previousPreviousChar;
     char lastCharAdded;
-    QuoteType quoteState;
-    CommentType commentState;
+    MetaState metaState;
 }
 
-enum QuoteType { None, Single, Double, Backtick }
-enum CommentType { None, DoubleForwardSlash, ForwardSlashStar }
+ParserState createParserState(){
+    ParserState parserState;
+    parserState.metaState = MetaState.None;
+    
+    return parserState;
+}
 
 ParserState minifyLine(ref char[] line, ParserState parserState){
     char[] minifiedLineBuffer;
@@ -31,47 +36,48 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
         shouldAddChar = false;
         switch(c){
             case '\n':
-                if(parserState.commentState == CommentType.DoubleForwardSlash){
-                    parserState.commentState = CommentType.None;
+                if(parserState.metaState == MetaState.CommentDoubleForwardSlash){
+                    parserState.metaState = MetaState.None;
                     break;
                 }
+                //goto required for fallthrough because of compiler warning
                 goto case '\r';
             case ' ':
-                if(isJsVariableNameChar(parserState.lastCharAdded) && isJsVariableNameChar(nextChar)){
-                    goto DEFAULT_CASE;
-                }
-                goto case '\r';
             case '\t':
             case '\r':
-                if(parserState.quoteState != QuoteType.None){
+                if(isInQuote(parserState.metaState)){
+                    goto DEFAULT_CASE;
+                }
+                else if(isJsVariableNameChar(parserState.lastCharAdded) && (isJsVariableNameChar(nextChar) || nextChar == 0)){
                     goto DEFAULT_CASE;
                 }
                 break;
             case '"':
-                parserState = processQuoteType(parserState, QuoteType.Double);
+                parserState = processQuoteType(parserState, MetaState.QuoteDouble);
                 goto DEFAULT_CASE;
             case '\'':
-                parserState = processQuoteType(parserState, QuoteType.Single);
+                parserState = processQuoteType(parserState, MetaState.QuoteSingle);
                 goto DEFAULT_CASE;
             case '`':
-                parserState = processQuoteType(parserState, QuoteType.Backtick);
+                parserState = processQuoteType(parserState, MetaState.QuoteBacktick);
                 goto DEFAULT_CASE;
             case '/':
-                if(parserState.quoteState != QuoteType.None){
+                if(isInQuote(parserState.metaState)){
                     goto DEFAULT_CASE;
                 }
-                else if(parserState.commentState == CommentType.ForwardSlashStar && parserState.previousChar == '*'){
-                    parserState.commentState = CommentType.None;
+                else if(parserState.metaState == MetaState.CommentForwardSlashStar && parserState.previousChar == '*'){
+                    parserState.metaState = MetaState.None;
                 }
-                else if(parserState.commentState != CommentType.None){
+                else if(isInComment(parserState.metaState)){
                     //don't do anything, since we are in a comment and we are not ending a comment
                 }
                 //because of previous else if check, commentState is CommentType.None for following checks
-                else if(nextChar == '/'){
-                    parserState.commentState = CommentType.DoubleForwardSlash;
+                //backslash check is so this works with regex literals, but might have some weird edge cases with single line comments
+                else if(nextChar == '/' && parserState.previousChar != '\\'){
+                    parserState.metaState = MetaState.CommentDoubleForwardSlash;
                 }
                 else if(nextChar == '*'){
-                    parserState.commentState = CommentType.ForwardSlashStar;
+                    parserState.metaState = MetaState.CommentForwardSlashStar;
                 }
                 //division sign
                 else{
@@ -80,7 +86,7 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
                 break;
             DEFAULT_CASE:
             default:
-                if(parserState.commentState == CommentType.None){
+                if(!isInComment(parserState.metaState)){
                     shouldAddChar = true;   
                 }
                 break;
@@ -101,7 +107,6 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
     return parserState;
 }
 
-
 bool isJsVariableNameChar(char c){
     if(isAlpha(c) || isDigit(c)){
         return true;
@@ -116,15 +121,36 @@ bool isJsVariableNameChar(char c){
     }
 }
 
-ParserState processQuoteType(ParserState parserState, QuoteType quoteType){
-    if(parserState.commentState != CommentType.None){
+bool isInQuote(MetaState metaState){
+    switch(metaState){
+        case MetaState.QuoteSingle:
+        case MetaState.QuoteDouble:
+        case MetaState.QuoteBacktick:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool isInComment(MetaState metaState){
+    switch(metaState){
+        case MetaState.CommentDoubleForwardSlash:
+        case MetaState.CommentForwardSlashStar:
+            return true;
+        default:
+            return false;
+    }
+}
+
+ParserState processQuoteType(ParserState parserState, MetaState quoteType){
+    if(isInComment(parserState.metaState)){
         return parserState;
     }
-    if(parserState.quoteState == quoteType && !(parserState.previousChar == '\\' && parserState.previousPreviousChar != '\\')){
-        parserState.quoteState = QuoteType.None;
+    if(parserState.metaState == quoteType && !(parserState.previousChar == '\\' && parserState.previousPreviousChar != '\\')){
+        parserState.metaState = MetaState.None;
     }
-    else if(parserState.quoteState == QuoteType.None){
-        parserState.quoteState = quoteType;
+    else if(parserState.metaState == MetaState.None){
+        parserState.metaState = quoteType;
     }
     return parserState;
 }
