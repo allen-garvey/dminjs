@@ -10,3 +10,7 @@ release:
 	
 test:
 	./bin/dminjs ./tests/test.js > ./tests/test.min.js
+
+bin/test: src/minify.d src/test.d
+	dmd src/minify.d src/test.d -of./bin/test -od./bin -unittest
+	
