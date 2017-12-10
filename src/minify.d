@@ -6,14 +6,15 @@ enum MetaState { None, RegexLiteral, QuoteSingle, QuoteDouble, QuoteBacktick, Co
 
 struct ParserState{
     char previousChar;
-    char previousPreviousChar;
     char lastCharAdded;
+    long escapeCharacterSequenceCount;
     MetaState metaState;
 }
 
 ParserState createParserState(){
     ParserState parserState;
     parserState.metaState = MetaState.None;
+    parserState.escapeCharacterSequenceCount = 0;
     
     return parserState;
 }
@@ -34,6 +35,7 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
             nextChar = 0;
         }
         shouldAddChar = false;
+        
         switch(c){
             case '\n':
                 if(parserState.metaState == MetaState.CommentDoubleForwardSlash){
@@ -61,6 +63,11 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
             case '`':
                 parserState = processQuoteType(parserState, MetaState.QuoteBacktick);
                 goto DEFAULT_CASE;
+            case '\\':
+                if(isInCharacterLiteral(parserState.metaState)){
+                    parserState.escapeCharacterSequenceCount++;
+                }
+                goto DEFAULT_CASE;
             case '/':
                 if(isInQuote(parserState.metaState)){
                     goto DEFAULT_CASE;
@@ -71,13 +78,16 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
                 else if(isInComment(parserState.metaState)){
                     //don't do anything, since we are in a comment and we are not ending a comment
                 }
-                //because of previous else if check, commentState is CommentType.None for following checks
-                //backslash check is so this works with regex literals, but might have some weird edge cases with single line comments
-                else if(nextChar == '/' && parserState.previousChar != '\\'){
+                //because of previous else if checks, we know we are not in a comment here
+                else if(parserState.metaState == MetaState.None && nextChar == '/'){
                     parserState.metaState = MetaState.CommentDoubleForwardSlash;
                 }
-                else if(nextChar == '*'){
+                else if(parserState.metaState == MetaState.None && nextChar == '*'){
                     parserState.metaState = MetaState.CommentForwardSlashStar;
+                }
+                else if(parserState.metaState == MetaState.RegexLiteral || parserState.metaState == MetaState.None ){
+                    parserState = processQuoteType(parserState, MetaState.RegexLiteral);
+                    goto DEFAULT_CASE;
                 }
                 //division sign
                 else{
@@ -97,7 +107,6 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
             parserState.lastCharAdded = c;
             bufferIndex++;
         }
-        parserState.previousPreviousChar = parserState.previousChar;
         parserState.previousChar = c;
     }
     
@@ -132,6 +141,10 @@ bool isInQuote(MetaState metaState){
     }
 }
 
+bool isInCharacterLiteral(MetaState metaState){
+    return isInQuote(metaState) || metaState == MetaState.RegexLiteral;
+}
+
 bool isInComment(MetaState metaState){
     switch(metaState){
         case MetaState.CommentDoubleForwardSlash:
@@ -146,8 +159,9 @@ ParserState processQuoteType(ParserState parserState, MetaState quoteType){
     if(isInComment(parserState.metaState)){
         return parserState;
     }
-    if(parserState.metaState == quoteType && !(parserState.previousChar == '\\' && parserState.previousPreviousChar != '\\')){
+    if(parserState.metaState == quoteType && (parserState.previousChar != '\\' || parserState.escapeCharacterSequenceCount % 2 == 0)){
         parserState.metaState = MetaState.None;
+        parserState.escapeCharacterSequenceCount = 0;
     }
     else if(parserState.metaState == MetaState.None){
         parserState.metaState = quoteType;
