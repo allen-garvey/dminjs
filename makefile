@@ -1,8 +1,9 @@
 SRC = ./src/main.d ./src/minify.d
+TEST_SRC = src/minify.d src/test.d
 
-all: dev
+all: bin/dminjs bin/test
 
-dev: $(SRC)
+bin/dminjs: $(SRC)
 	dmd $(SRC) -of./bin/dminjs -od./bin -unittest
 
 release:
@@ -11,6 +12,6 @@ release:
 test:
 	./bin/dminjs ./tests/test.js > ./tests/test.min.js
 
-bin/test: src/minify.d src/test.d
+bin/test: $(TEST_SRC)
 	dmd src/minify.d src/test.d -of./bin/test -od./bin -unittest
 	
