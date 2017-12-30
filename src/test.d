@@ -25,7 +25,8 @@ TestCase[] getTestCases(){
     ret ~= TestCase("regex literal", `  var regexLiteral = /oeu.[a-z \W"]\//; //comment `, `var regexLiteral=/oeu.[a-z \W"]\//;`);
     ret ~= TestCase("regex literal2", `  var regexLiteral = /oeu.[a-z g"]\//; //comment `, `var regexLiteral=/oeu.[a-z g"]\//;`);
     ret ~= TestCase("regex literal3", `  let regex=/ a b /; `, `let regex=/ a b /;`);
-    ret ~= TestCase("regex literal4", `  func(/ a /, 'hello there') ; `, `func(/ a /,'hello there');`);
+    ret ~= TestCase("regex literal4", `  func(/ a b/, 'hello there') ; `, `func(/ a b/,'hello there');`);
+    ret ~= TestCase("regex literal with flag", `  test=/ ^q a/g , //comment `, `test=/ ^q a/g,`);
     ret ~= TestCase("division", `  var pi = (3.0 / 5) / (1/2); //comment `, `var pi=(3.0/5)/(1/2);`);
     ret ~= TestCase("division2", `  ( a  / 10. ) / _ / ($ ) / x3 ; //comment `, `(a/10.)/_/($)/x3;`);
     ret ~= TestCase("dividing nonsense", ` let d =   [] / 3. / " hello " / '  anyway ' ; `, `let d=[]/3./" hello "/'  anyway ';`);

@@ -86,7 +86,7 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
                     parserState.metaState = MetaState.CommentForwardSlashStar;
                 }
                 //division sign
-                else if(isDivisonSign(parserState.lastCharAdded)){
+                else if(parserState.metaState == MetaState.None && isDivisonSign(parserState.lastCharAdded)){
                     goto DEFAULT_CASE;
                 }
                 //regex literal
@@ -188,7 +188,7 @@ ParserState processQuoteType(ParserState parserState, MetaState quoteType){
     if(isInComment(parserState.metaState)){
         return parserState;
     }
-    if(parserState.metaState == quoteType && (parserState.previousChar != '\\' || parserState.escapeCharacterSequenceCount % 2 == 0)){
+    if(parserState.metaState == quoteType && parserState.escapeCharacterSequenceCount % 2 == 0){
         parserState.metaState = MetaState.None;
     }
     else if(parserState.metaState == MetaState.None){
