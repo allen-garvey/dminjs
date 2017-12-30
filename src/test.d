@@ -23,8 +23,13 @@ TestCase[] getTestCases(){
     ret ~= TestCase("whitespace", "  \n\n   \t \r  ", ``);
     ret ~= TestCase("single line comment", "  //testing a comment \n var a = 'hello there'; ", `var a='hello there';`);
     ret ~= TestCase("regex literal", `  var regexLiteral = /oeu.[a-z \W"]\//; //comment `, `var regexLiteral=/oeu.[a-z \W"]\//;`);
+    ret ~= TestCase("regex literal2", `  var regexLiteral = /oeu.[a-z g"]\//; //comment `, `var regexLiteral=/oeu.[a-z g"]\//;`);
+    ret ~= TestCase("regex literal3", `  let regex=/ a b /; `, `let regex=/ a b /;`);
+    ret ~= TestCase("regex literal4", `  func(/ a /, 'hello there') ; `, `func(/ a /,'hello there');`);
     ret ~= TestCase("division", `  var pi = (3.0 / 5) / (1/2); //comment `, `var pi=(3.0/5)/(1/2);`);
+    ret ~= TestCase("dividing nonsense", ` let d =   [] / 3. / " hello " / '  anyway ' ; `, `let d=[]/3./" hello "/'  anyway ';`);
     ret ~= TestCase("double quotes with escapes", `var s = "hello \" "; //comment  `, `var s="hello \" ";`);
+    ret ~= TestCase("ending quote with backslash", ` " hello \" there \\"; //comment`, `" hello \" there \\";`);
     
     return ret;
 }
