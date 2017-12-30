@@ -47,7 +47,7 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
             case ' ':
             case '\t':
             case '\r':
-                if(isInQuote(parserState.metaState)){
+                if(isInCharacterLiteral(parserState.metaState)){
                     goto DEFAULT_CASE;
                 }
                 else if(isJsVariableNameChar(parserState.lastCharAdded) && (isJsVariableNameChar(nextChar) || nextChar == 0)){
@@ -85,11 +85,16 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
                 else if(parserState.metaState == MetaState.None && nextChar == '*'){
                     parserState.metaState = MetaState.CommentForwardSlashStar;
                 }
-                else if(parserState.metaState == MetaState.RegexLiteral || parserState.metaState == MetaState.None ){
+                //division sign
+                else if(isDivisonSign(parserState.lastCharAdded)){
+                    goto DEFAULT_CASE;
+                }
+                //regex literal
+                else if(parserState.metaState == MetaState.RegexLiteral || parserState.metaState == MetaState.None){
                     parserState = processQuoteType(parserState, MetaState.RegexLiteral);
                     goto DEFAULT_CASE;
                 }
-                //division sign
+                //should never reach here, but let's leave it here just in case
                 else{
                     goto DEFAULT_CASE;
                 }
@@ -106,6 +111,9 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
             minifiedLineBuffer[bufferIndex] = c;
             parserState.lastCharAdded = c;
             bufferIndex++;
+        }
+        if(c != '\\'){
+            parserState.escapeCharacterSequenceCount = 0;
         }
         parserState.previousChar = c;
     }
@@ -124,6 +132,27 @@ bool isJsVariableNameChar(char c){
     switch(c){
         case '_':
         case '$':
+            return true;
+        default:
+            return false;
+    }
+}
+
+//used to determine if a forward slash '/'
+//is acting as a division sign, or regex literal
+bool isDivisonSign(char previousCharAdded){
+    if(isAlpha(previousCharAdded) || isDigit(previousCharAdded)){
+        return true;
+    }
+    switch(previousCharAdded){
+        case ']':
+        case ')':
+        case '\'':
+        case '"':
+        case '`':
+        case '$':
+        case '_':
+        case '.':
             return true;
         default:
             return false;
@@ -161,7 +190,6 @@ ParserState processQuoteType(ParserState parserState, MetaState quoteType){
     }
     if(parserState.metaState == quoteType && (parserState.previousChar != '\\' || parserState.escapeCharacterSequenceCount % 2 == 0)){
         parserState.metaState = MetaState.None;
-        parserState.escapeCharacterSequenceCount = 0;
     }
     else if(parserState.metaState == MetaState.None){
         parserState.metaState = quoteType;
