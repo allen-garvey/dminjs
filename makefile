@@ -8,9 +8,6 @@ bin/dminjs: $(SRC)
 
 release:
 	dmd $(SRC) -of./bin/dminjs -od./bin -O -inline
-	
-test:
-	./bin/dminjs ./tests/test.js > ./tests/test.min.js
 
 bin/test: $(TEST_SRC)
 	dmd src/minify.d src/test.d -of./bin/test -od./bin -unittest
