@@ -30,9 +30,11 @@ TestCase[] getTestCases(){
     ret ~= TestCase("division", `  var pi = (3.0 / 5) / (1/2); //comment `, `var pi=(3.0/5)/(1/2);`);
     ret ~= TestCase("division2", `  ( a  / 10. ) / _ / ($ ) / x3 ; //comment `, `(a/10.)/_/($)/x3;`);
     ret ~= TestCase("dividing nonsense", ` let d =   [] / 3. / " hello " / '  anyway ' ; `, `let d=[]/3./" hello "/'  anyway ';`);
+    ret ~= TestCase("division assignment", ` let a \= 3 ; //comment`, `let a\=3;`);
     ret ~= TestCase("double quotes with escapes", `var s = "hello \" "; //comment  `, `var s="hello \" ";`);
     ret ~= TestCase("ending quote with backslash", ` " hello \" there \\"; //comment`, `" hello \" there \\";`);
-    
+    ret ~= TestCase("multi-line comment", ` let q = /* ignore this */ 3.66 ;`, `let q=3.66;`);
+    ret ~= TestCase("es6 function", ` var f = ( b, q ) => { console.log("hello there !"); } ; `, `var f=(b,q)=>{console.log("hello there !");};`);
     return ret;
 }
 
