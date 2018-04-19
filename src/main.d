@@ -2,14 +2,13 @@ module dminjs.main;
 
 import std.stdio;
 import std.file;
-import core.sys.posix.unistd;
 import dminjs.minify;
 
 int main(string[] args){
     File inputFile;
     
     //check if input is being piped
-    if(!isatty(stdin.fileno)){
+    if(!isTty()){
         inputFile = stdin;
     }
     else{
@@ -22,6 +21,18 @@ int main(string[] args){
     minifyFile(inputFile);
     
     return 0;
+}
+
+//cross platform compatible version of isatty,
+//just returns false on Windows
+bool isTty(){
+    version(Windows){
+        return false;
+    }
+    else{
+        import core.sys.posix.unistd;
+        return isatty(stdin.fileno) == 1;
+    }
 }
 
 bool areArgumentsValid(string[] args){
