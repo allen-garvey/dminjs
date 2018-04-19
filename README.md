@@ -4,8 +4,8 @@ An ES2015 compliant JavaScript minifier written in D. While it only strips out c
 
 ## Dependencies
 
-* dmd v2.077.0
-* POSIX compatible operating system (because of usage of `isatty` function and `make`)
+* dmd >= v2.073.2
+* make
 
 ## Installation
 
@@ -14,10 +14,11 @@ An ES2015 compliant JavaScript minifier written in D. While it only strips out c
 
 ## Usage
 
-(Assumes you have already run `make`) Either specify an input file (`./bin/dminjs app.js > app.min.js`) or pipe the files into dminjs (`cat app1.js app2.js | ./bin/dminjs > app.min.js`)
+Specify an input file as an argument `./bin/dminjs app.js > app.min.js` or pipe input directly into dminjs `cat app1.js app2.js | ./bin/dminjs > app.min.js`
 
 ## Caveats
 
+* No support for direct piping of input on Windows, must specify input file as argument
 * Only removes comments and excess whitespace (does not rename long variables or prune unused code)
 * Might not work correctly if you use newlines instead of semicolons to end statements
 
