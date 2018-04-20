@@ -7,8 +7,7 @@ import dminjs.minify;
 int main(string[] args){
     File inputFile;
     
-    //check if input is being piped
-    if(!isTty()){
+    if(isInputFromPipe()){
         inputFile = stdin;
     }
     else{
@@ -25,13 +24,13 @@ int main(string[] args){
 
 //cross platform compatible version of isatty,
 //just returns false on Windows
-bool isTty(){
+bool isInputFromPipe(){
     version(Windows){
         return false;
     }
     else{
         import core.sys.posix.unistd;
-        return isatty(stdin.fileno) == 1;
+        return isatty(stdin.fileno) == 0;
     }
 }
 
