@@ -14,7 +14,17 @@ int main(string[] args){
         if(!areArgumentsValid(args)){
             return printUsage(args[0]);
         }
-        inputFile.open(args[1]);
+        string inputFileName = args[1];
+        
+        if(!exists(inputFileName)){
+            writef("%s does not exist\n", inputFileName);
+            return 1;
+        }
+        if(!isFile(inputFileName)){
+            writef("%s is not a file\n", inputFileName);
+            return 1;
+        }
+        inputFile.open(inputFileName);
     }
     
     minifyFile(inputFile);
@@ -35,15 +45,7 @@ bool isInputFromPipe(){
 }
 
 bool areArgumentsValid(string[] args){
-    if(args.length != 2){
-        return false;
-    }
-    
-    return isValidFileName(args[1]);
-}
-
-bool isValidFileName(string fileName){
-    return exists(fileName) && isFile(fileName);
+    return args.length == 2;
 }
 
 int printUsage(string programName){
