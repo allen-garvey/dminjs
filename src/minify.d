@@ -19,7 +19,7 @@ ParserState createParserState(){
     return parserState;
 }
 
-ParserState minifyLine(ref char[] line, ParserState parserState){
+char[] minifyLine(char[] line, ref ParserState parserState){
     char[] minifiedLineBuffer;
     minifiedLineBuffer.length = line.length;
     
@@ -119,9 +119,8 @@ ParserState minifyLine(ref char[] line, ParserState parserState){
     }
     
     minifiedLineBuffer.length = bufferIndex;
-    line = minifiedLineBuffer;
     
-    return parserState;
+    return minifiedLineBuffer;
 }
 
 bool isJsVariableNameChar(char c){

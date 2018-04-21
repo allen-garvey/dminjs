@@ -42,8 +42,7 @@ bool runTestCase(TestCase testCase, bool shouldPrintError){
     bool didTestCasePass;
     
     ParserState parserState = createParserState();
-    char[] output = testCase.input.dup;
-    parserState = minifyLine(output, parserState);
+    char[] output = minifyLine(cast(char[])testCase.input, parserState);
     
     didTestCasePass = output == testCase.expected;
     

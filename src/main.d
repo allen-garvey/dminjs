@@ -58,7 +58,6 @@ void minifyFile(File file){
     
     char[] buf;
     while(file.readln(buf)){
-        parserState = minifyLine(buf, parserState);
-        write(buf);
+        write(minifyLine(buf, parserState));
     }
 }
